@@ -14,7 +14,6 @@ app.get('/login', (req, res) => {
     res.sendFile(
         './static/login.html',
         {root: __dirname},
-        () => console.log("GET >> login.html")
     )
 })
 
@@ -39,7 +38,6 @@ app.get('/checkLogin', (req, res) => {
             } else {
                 res_obj.msg = "Success false!!!"
             }
-            console.log("Something was going wrong")
             res.send(JSON.stringify(res_obj))
         } else { // Успешно
             crypto.randomBytes(24, (err, buffer) => {
@@ -104,13 +102,14 @@ app.get('/getUserByLogin', (req, res) => {
                 res_row: {}
             }))
         } else {
-            db.all('SELECT content, date, marks From Sticker Where user = (?)', [row.id], (er, rows) => {
+            db.all('SELECT id, content, date, marks, position From Sticker Where user = (?)', [row.id], (er, rows) => {
 
                 if (er) {
                     console.log(er)
                 } else {
                     res.send(JSON.stringify({
-                        res_rows: rows
+                        res_rows: rows,
+                        user_id: row.id
                     }))
                 }
 
@@ -119,6 +118,67 @@ app.get('/getUserByLogin', (req, res) => {
 
     })
 
+})
+
+app.get('/createNewSticker', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let id = parsedQS.id
+
+    let sql = 'INSERT INTO Sticker ("user", "content", "date", "marks") VALUES (?, ?, ?, ?)'
+    db.run(sql, [id, "", new Date(), ""], (er) => {
+        if (er) {
+            console.log(er)
+            res.send(JSON.stringify({
+                success: false
+            }))
+        } else {
+            res.send(JSON.stringify({
+                success: true
+            }))
+        }
+    })
+})
+
+app.get('/updateStickerPos', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let id = parsedQS.id
+    let pos = parsedQS.pos
+
+    let sql = 'UPDATE Sticker SET position = (?) WHERE id = (?)'
+    db.run(sql, [pos, id], (er) => {
+        if (er) {
+            console.log(er)
+        } else {
+            res.send(JSON.stringify({
+                success: true,
+                newPos: pos
+            }))
+        }
+    })
+
+})
+
+app.get('/delSticker', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let id = parsedQS.id
+
+    let sql = 'DELETE FROM Sticker WHERE id = (?)'
+    db.run(sql, [id], (er) => {
+        if (er) {
+            console.log(er)
+        } else {
+            console.log("All right!!!")
+            res.send(JSON.stringify({
+                success: true
+            }))
+        }
+    })
 })
 
 app.listen(port, () => {

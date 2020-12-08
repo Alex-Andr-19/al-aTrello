@@ -19,6 +19,44 @@ function parseCookies() {
     return list;
 }
 
+function createTools(stickerID) {
+    let tools = document.createElement('div')
+    tools.className = "tools float-right d-flex justify-content-between align-items-center"
+    let penButton = document.createElement('button')
+    let imgSize = 11
+    let pen = document.createElement('img')
+    pen.src = "./assets/pen.png"
+    pen.alt = "pen"
+    pen.width = imgSize
+    penButton.append(pen)
+    tools.append(penButton)
+    let closeButton = document.createElement('button')
+    closeButton.onclick = () => delSticker(stickerID)
+    let close = document.createElement('img')
+    close.src = "./assets/close.png"
+    close.alt = "close"
+    close.width = imgSize
+    closeButton.append(close)
+    tools.append(closeButton)
+
+    return tools
+}
+
+function createMarkListTag(stickerObj) {
+    let markListTag = document.createElement("div")
+    markListTag.className = "mark-list d-flex justify-content-between align-items-center"
+    let markList = stickerObj.marks.split(', ')
+    markList.forEach(markText => {
+        let markTag = document.createElement('div')
+        markTag.className = "mark"
+        markTag.innerText = markText
+
+        markListTag.append(markTag)
+    })
+
+    return markListTag
+}
+
 function logIn(ev) {
     ev.preventDefault()
     let login = document.getElementById('login').value
@@ -36,7 +74,6 @@ function logIn(ev) {
             infoBlock.innerText = json.msg
             infoBlock.classList.toggle('inf-blk-warn')
             infoBlock.classList.toggle('nothing')
-            // console.log(infoBlock.className)
         }
     })
 }
@@ -62,12 +99,17 @@ function signUp(ev) {
         })
 }
 
-function updateStickers() {
+function updateStickers(flag) {
     fetch(`/getUserByLogin?login=${userLogin.innerText}`, {method: 'GET', credentials: 'include'})
         .then(response => response.json())
         .then(json => {
             showStickers(json.res_rows)
         })
+}
+
+function updateStickerPosition(sticker) {
+    fetch(`/updateStickerPos?id=${sticker.id}&pos=${sticker.style.top + ',' + sticker.style.left}`,
+        {method: 'GET', credentials: 'include'})
 }
 
 function showStickers(stickers) {
@@ -78,47 +120,47 @@ function showStickers(stickers) {
     stickers.forEach(stickerObj => {
 
         let sticker = document.createElement("div")
-        let top = document.createElement("div")
-        let markListTag = document.createElement("div")
-        let dateTime = document.createElement("div")
-        let content = document.createElement("div")
+        let position = stickerObj.position.split(",")
 
+        sticker.style.top = position[0]
+        sticker.style.left = position[1]
         sticker.draggable = true
-        sticker.id = `stk${document.getElementsByClassName("sticker").length + 1}`
+        sticker.id = `${stickerObj.id}`
         sticker.className = "sticker"
-
         sticker.addEventListener('dragstart', function (ev) {
             startDragX = ev.offsetX
             startDragY = ev.offsetY
         })
-
         sticker.addEventListener('dragend', function (ev) {
             sticker.style.top = (ev.pageY - startDragY) + 'px'
             sticker.style.left = (ev.pageX - startDragX) + 'px'
+            updateStickerPosition(sticker)
         })
 
+        let tools = createTools(sticker.id)
+
+        let space = document.createElement('div')
+        space.className = "space"
+
+        let top = document.createElement("div")
         top.className = "top d-flex justify-content-between align-items-center"
 
-        markListTag.className = "mark-list d-flex justify-content-between align-items-center"
-        let markList = stickerObj.marks.split(', ')
-        markList.forEach(markText => {
-            let markTag = document.createElement('div')
-            markTag.className = "mark"
-            markTag.innerText = markText
+        let markListTag = createMarkListTag(stickerObj)
 
-            markListTag.append(markTag)
-        })
-
+        let dateTime = document.createElement("div")
         dateTime.className = "date-time"
         let stickerDate = new Date(stickerObj.date)
         dateTime.innerText = stickerDate.getUTCDate() + "." + (stickerDate.getUTCMonth() + 1) + "." + stickerDate.getUTCFullYear()
 
+        let content = document.createElement("div")
         content.className = "content"
         content.innerText = stickerObj.content
 
         top.append(markListTag)
         top.append(dateTime)
 
+        sticker.append(tools)
+        sticker.append(space)
         sticker.append(top)
         sticker.append(document.createElement("hr"))
         sticker.append(content)
@@ -129,64 +171,25 @@ function showStickers(stickers) {
 }
 
 function createNewSticker() {
-    let main = document.getElementsByTagName("main")[0]
-    let sticker = document.createElement("div")
-    let top = document.createElement("div")
-    let markList = document.createElement("div")
-    let dateTime = document.createElement("div")
-    let content = document.createElement("div")
-
-    sticker.draggable = true
-    sticker.id = `stk${document.getElementsByClassName("sticker").length + 1}`
-    sticker.className = "sticker"
-
-    sticker.addEventListener('dragstart', function (ev) {
-        startDragX = ev.offsetX
-        startDragY = ev.offsetY
-    })
-
-    sticker.addEventListener('dragend', function (ev) {
-        sticker.style.top = (ev.pageY - startDragY) + 'px'
-        sticker.style.left = (ev.pageX - startDragX) + 'px'
-    })
-
-    top.className = "top d-flex justify-content-between align-items-center"
-
-    markList.className = "mark-list d-flex justify-content-between align-items-center"
-    dateTime.className = "date-time"
-    dateTime.innerText = today.getDate() + "." + today.getMonth() + "." + today.getFullYear()
-
-    content.className = "content"
-    content.innerText = "Your message to yourself..."
-
-    top.append(markList)
-    top.append(dateTime)
-
-    sticker.append(top)
-    sticker.append(document.createElement("hr"))
-    sticker.append(content)
-
-
-    main.append(sticker)
+    fetch(`/getUserByLogin?login=${userLogin.innerText}`, {method: 'GET', credentials: 'include'})
+        .then(response => response.json())
+        .then(json => {
+            fetch(`/createNewSticker?id=${json.user_id}`, {method: 'GET', credentials: 'include'})
+                .then(response => response.json())
+                .then(json2 => {
+                    updateStickers()
+                })
+        })
 }
 
-if (stickers) {
-    for (let sticker of stickers) {
-        sticker.addEventListener('dragstart', function (ev) {
-            startDragX = ev.offsetX
-            startDragY = ev.offsetY
+function delSticker(stickerID) {
+    fetch(`/delSticker?id=${stickerID}`, {method: 'GET', credentials: 'include'})
+        .then(response => response.json())
+        .then(json => {
+            updateStickers()
         })
-
-        sticker.addEventListener('dragend', function (ev) {
-            sticker.style.top = (ev.pageY - startDragY) + 'px'
-            sticker.style.left = (ev.pageX - startDragX) + 'px'
-        })
-    }
-
-    // sticker.addEventListener('mouseover', function(ev) {
-    //     sticker
-    // })
 }
+
 window.addEventListener('load', () => {
     if (signInBtn) {
         document.getElementById('login-btn').addEventListener('click', logIn)
@@ -195,6 +198,6 @@ window.addEventListener('load', () => {
     }
     if (userLogin) {
         userLogin.innerText = parseCookies().userLogin
-        updateStickers()
+        updateStickers(true)
     }
 })
