@@ -48,23 +48,6 @@
         </header>
 
         <main>
-            <div class="sticker" id="stk1" draggable="true">
-                <div class="top d-flex justify-content-between align-items-center">
-                    <div class="mark-list d-flex justify-content-between align-items-center">
-                        <div class="mark">Mark1</div>
-                        <div class="mark">Mark2</div>
-                        <div class="mark">Mark3</div>
-                    </div>
-                    <div class="date-time">2.12.2020</div>
-                </div>
-
-                <hr>
-
-                <div class="content">
-                    An nam debet instructior, commodo mediocrem id cum. Per in illud petentium iudicabit, integre
-                    sententiae pro no. Eu eam dolores lobortis percipitur, quo te equidem deleniti disputando.
-                </div>
-            </div>
             <button class="add-sticker" onclick="createNewSticker()"><img src="./assets/plus.png" alt="plus"></button>
         </main>
 
@@ -84,6 +67,49 @@
                 </div>
             </div>
         </footer>
+
+        <div class="edit-window d-none justify-content-center align-items-center" id="edit-window">
+            <div class="edit-sticker">
+                <button class="close-edit-window d-flex item-align-center" id="edit-window-close">
+                    <img src="./assets/close.png" alt="close" width="20">
+                </button>
+
+                <div class="space"></div>
+
+                <div class="edit-form" id="edit-form">
+                    <span style="font-size: 1.5em; font-weight: 600;">Title</span>
+                    <input type="text" name="title" id="title">
+                    <br><br>
+
+                    <h4>Tags</h4>
+                    <div id="marks"></div>
+                    <button class="add-mark" id="add-mark">
+                        <img src="./assets/plus.png" alt="plus" width="15">
+                    </button>
+
+                    <div class="edit-mark-list d-none" id="edit-mark-list">
+                        <span>Tags</span>
+                        <div class="all-marks" id="all-marks"></div>
+
+                        <br><br>
+                        <label for="new-mark-name">New Tag</label>
+                        <input type="text" id="new-mark-name"><br>
+                        <input type="color" id="new-mark-color">
+                        <br><br>
+
+                        <button class="btn btn-info float-right" id="add-new-mark">Add</button>
+                    </div>
+
+                    <br><br>
+                    <h4>Content</h4>
+                    <textarea name="content" id="content" rows="3"></textarea><br>
+                    <br><br>
+
+                    <button class="btn btn-info float-right" id="save-changes">Save</button>
+                </div>
+            </div>
+        </div>
+
         <script src="scripts.js"></script>
     </body>
 </html>

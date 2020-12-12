@@ -1,60 +1,115 @@
 let signInBtn = document.getElementById('login-btn')
-let today = new Date()
 
-let stickers = document.getElementsByClassName('sticker')
 let startDragX = 0
 let startDragY = 0
 
-let userLogin = document.getElementById('user-login')
+let userLogin = document.getElementById('user-login').innerText
+let openedSticker = 0
 
 function parseCookies() {
-    var list = {},
+    let list = {},
         rc = document.cookie;
 
     rc && rc.split(';').forEach(function (cookie) {
-        var parts = cookie.split('=');
+        let parts = cookie.split('=');
         list[parts.shift().trim()] = decodeURI(parts.join('='));
     });
 
     return list;
 }
 
-function createTools(stickerID) {
+function createTools(sticker, userID) {
     let tools = document.createElement('div')
     tools.className = "tools float-right d-flex justify-content-between align-items-center"
-    let penButton = document.createElement('button')
     let imgSize = 11
+    let dflex_alcenter = "d-flex item-align-center"
+
+    let lockButton = document.createElement('div')
+    lockButton.className = "lock-button unlock " + dflex_alcenter
+    lockButton.onclick = () => {
+        if (lockButton.className.includes("unlock")) {
+            lockButton.classList.toggle("unlock")
+            lockButton.classList.toggle("lock")
+            lockButton.style.border = "2px solid indianred"
+            lockSticker(sticker.id)
+        } else {
+            lockButton.classList.toggle("unlock")
+            lockButton.classList.toggle("lock")
+            lockButton.style.border = "2px solid rgba(0, 0, 0, 0)"
+            unlockSticker(sticker.id)
+        }
+    }
+
+    let tack = document.createElement('img')
+    tack.src = "./assets/tack.png"
+    tack.alt = "lock"
+    tack.width = imgSize
+    lockButton.append(tack)
+    tools.append(lockButton)
+
+    let penButton = document.createElement('div')
+    penButton.className = dflex_alcenter
+    penButton.onclick = () => openEditWindow(sticker, userID)
+
     let pen = document.createElement('img')
     pen.src = "./assets/pen.png"
     pen.alt = "pen"
     pen.width = imgSize
     penButton.append(pen)
-    tools.append(penButton)
-    let closeButton = document.createElement('button')
-    closeButton.onclick = () => delSticker(stickerID)
+
+    let closeButton = document.createElement('div')
+    closeButton.className = dflex_alcenter
+    closeButton.onclick = () => delSticker(sticker.id)
+
     let close = document.createElement('img')
     close.src = "./assets/close.png"
     close.alt = "close"
     close.width = imgSize
     closeButton.append(close)
+
+    tools.append(lockButton)
+    tools.append(penButton)
     tools.append(closeButton)
 
     return tools
 }
 
-function createMarkListTag(stickerObj) {
+function createMarkListTag(sticker, userID) {
     let markListTag = document.createElement("div")
     markListTag.className = "mark-list d-flex justify-content-between align-items-center"
-    let markList = stickerObj.marks.split(', ')
-    markList.forEach(markText => {
-        let markTag = document.createElement('div')
-        markTag.className = "mark"
-        markTag.innerText = markText
+    // console.log('createMarkListTag get: ' + sticker.marks)
+    // console.log('For: ' + sticker.id)
+    let markList = sticker.marks.split(',')
+    markList.forEach(markName => {
+        if (markName) {
+            let markTag = document.createElement('div')
+            markTag.className = "mark"
 
-        markListTag.append(markTag)
+            markTag.innerText = markName
+            getMarkColor(markName, userID).then(color => markTag.style.background = color)
+
+            markListTag.append(markTag)
+        }
     })
 
     return markListTag
+}
+
+function getCheckImg() {
+    let imgContainer = document.createElement('div')
+    imgContainer.style.height = "inherit"
+    imgContainer.style.marginTop = "-0.1em"
+    imgContainer.style.float = "right"
+    imgContainer.style.display = "flex"
+    imgContainer.style.alignItems = "center"
+
+    let checkImg = document.createElement('img')
+    checkImg.src = './assets/check.png'
+    checkImg.width = 14
+
+    imgContainer.append(checkImg)
+
+    return imgContainer
 }
 
 function logIn(ev) {
@@ -99,20 +154,52 @@ function signUp(ev) {
         })
 }
 
-function updateStickers(flag) {
-    fetch(`/getUserByLogin?login=${userLogin.innerText}`, {method: 'GET', credentials: 'include'})
-        .then(response => response.json())
-        .then(json => {
-            showStickers(json.res_rows)
+function getUserIDByLogin(login) {
+    return new Promise((res, rej) => {
+        fetch(`/getUserIDByLogin?login=${login}`, {method: 'GET', credentials: 'include'})
+            .then(response => response.json())
+            .then(json => {
+                res(json.userID)
+            })
+    })
+}
+
+function updateStickers() {
+    getUserIDByLogin(userLogin)
+        .then(userID => {
+            getStickers().then(stickers => {
+                showStickers(stickers.stickers, userID)
+            })
         })
 }
 
-function updateStickerPosition(sticker) {
-    fetch(`/updateStickerPos?id=${sticker.id}&pos=${sticker.style.top + ',' + sticker.style.left}`,
+function getStickers() {
+    return new Promise((res, rej) => {
+        getUserIDByLogin(userLogin)
+            .then(userID => {
+                fetch(`/getStickersByUser?userID=${userID}`, {method: 'GET', credentials: 'include'})
+                    .then(response => response.json())
+                    .then(json => {
+                        res(json)
+                    })
+            })
+    })
+}
+
+function updateStickerPosition(stickerID, sticker) {
+    fetch(`/updateStickerPos?id=${stickerID}&pos=${sticker.style.top + ',' + sticker.style.left}`,
         {method: 'GET', credentials: 'include'})
 }
 
-function showStickers(stickers) {
+function lockSticker(stickerID) {
+    document.getElementById("sticker_" + stickerID).draggable = false
+}
+
+function unlockSticker(stickerID) {
+    document.getElementById("sticker_" + stickerID).draggable = true
+}
+
+function showStickers(stickers, userID) {
     let main = document.getElementsByTagName("main")[0]
     main.innerHTML = `
         <button class=\"add-sticker\" onclick=\"createNewSticker()\"><img src=\"./assets/plus.png\" alt=\"plus\"></button>
@@ -125,19 +212,25 @@ function showStickers(stickers) {
         sticker.style.top = position[0]
         sticker.style.left = position[1]
         sticker.draggable = true
-        sticker.id = `${stickerObj.id}`
+        sticker.id = `sticker_${stickerObj.id}`
         sticker.className = "sticker"
-        sticker.addEventListener('dragstart', function (ev) {
+        sticker.addEventListener('dragstart', (ev) => {
             startDragX = ev.offsetX
             startDragY = ev.offsetY
         })
-        sticker.addEventListener('dragend', function (ev) {
+        sticker.addEventListener('dragend', (ev) => {
             sticker.style.top = (ev.pageY - startDragY) + 'px'
             sticker.style.left = (ev.pageX - startDragX) + 'px'
-            updateStickerPosition(sticker)
+            updateStickerPosition(stickerObj.id, sticker)
         })
 
-        let tools = createTools(sticker.id)
+        let title = document.createElement('span')
+        title.style.fontSize = "1em"
+        title.style.fontWeight = "500"
+        title.style.float = "left"
+        title.innerText = stickerObj.title
+
+        let tools = createTools(stickerObj, userID)
 
         let space = document.createElement('div')
         space.className = "space"
@@ -145,12 +238,14 @@ function showStickers(stickers) {
         let top = document.createElement("div")
         top.className = "top d-flex justify-content-between align-items-center"
 
-        let markListTag = createMarkListTag(stickerObj)
+        let markListTag = createMarkListTag(stickerObj, userID)
 
         let dateTime = document.createElement("div")
         dateTime.className = "date-time"
-        let stickerDate = new Date(stickerObj.date)
-        dateTime.innerText = stickerDate.getUTCDate() + "." + (stickerDate.getUTCMonth() + 1) + "." + stickerDate.getUTCFullYear()
+        let stickerDate = new Date(new Date(stickerObj.date) + (3 * 60 * 60 * 1000))
+        dateTime.innerText = stickerDate.getDate() + "." +
+            (stickerDate.getMonth() + 1) + "." +
+            stickerDate.getFullYear()
 
         let content = document.createElement("div")
         content.className = "content"
@@ -159,24 +254,22 @@ function showStickers(stickers) {
         top.append(markListTag)
         top.append(dateTime)
 
+        sticker.append(title)
         sticker.append(tools)
         sticker.append(space)
         sticker.append(top)
         sticker.append(document.createElement("hr"))
         sticker.append(content)
 
-
         main.append(sticker)
     })
 }
 
 function createNewSticker() {
-    fetch(`/getUserByLogin?login=${userLogin.innerText}`, {method: 'GET', credentials: 'include'})
-        .then(response => response.json())
-        .then(json => {
-            fetch(`/createNewSticker?id=${json.user_id}`, {method: 'GET', credentials: 'include'})
-                .then(response => response.json())
-                .then(json2 => {
+    getUserIDByLogin(userLogin)
+        .then(userID => {
+            fetch(`/createNewSticker?id=${userID}`, {method: 'GET', credentials: 'include'})
+                .then(response => {
                     updateStickers()
                 })
         })
@@ -190,6 +283,162 @@ function delSticker(stickerID) {
         })
 }
 
+function getStickerMarks(stickerID) {
+    return new Promise((res, rej) => {
+        fetch(`/getStickerMarks?stickerID=${stickerID}`, {method: 'GET', credentials: 'include'})
+            .then(response => response.json())
+            .then(json => {
+                res(json.marks)
+            })
+    })
+}
+
+function openEditWindow(sticker, userID) {
+    openedSticker = sticker.id
+
+    let stickerTitle = document.getElementById('title')
+    stickerTitle.value = sticker.title
+
+    let allStickerMarks = document.getElementById('marks')
+    allStickerMarks.innerHTML = ""
+    let markHTML = createMarkListTag(sticker, userID)
+    markHTML.classList.toggle('flex-row')
+    markHTML.classList.toggle('justify-content-between')
+
+    allStickerMarks.append(markHTML)
+
+    let stickerContent = document.getElementById('content')
+    stickerContent.innerText = sticker.content
+
+    let editWindow = document.getElementById('edit-window')
+
+    let allMarks = editWindow.children[0].children[2].children[7].children[1].children
+    getStickerMarks(sticker.id).then(marks => {
+        for (let i = 0; i < allMarks.length; i++) {
+            if (marks.indexOf(allMarks[i].innerText) >= 0) {
+                allMarks[i].className = "mark checked"
+                allMarks[i].append(getCheckImg())
+            } else {
+                allMarks[i].className = "mark unchecked"
+            }
+        }
+    })
+
+    editWindow.classList.toggle('d-flex')
+    editWindow.classList.toggle('d-none')
+}
+
+function updateEditWindow() {
+    let allStickerMarks = document.getElementById('marks')
+    allStickerMarks.innerHTML = ""
+
+    let stickerMarks = {marks: []}
+    let userID = 0
+    getStickerMarks(openedSticker).then(marks => stickerMarks.marks = marks.join(','))
+    console.log(stickerMarks)
+    getUserIDByLogin(userLogin).then(response => userID = response)
+
+    let markHTML = createMarkListTag(stickerMarks, userID)
+    markHTML.classList.toggle('flex-row')
+    markHTML.classList.toggle('justify-content-between')
+
+    allStickerMarks.append(markHTML)
+}
+
+function closeEditWindow() {
+    let editWindow = document.getElementById('edit-window')
+    editWindow.classList.toggle('d-flex')
+    editWindow.classList.toggle('d-none')
+
+    document.getElementById('all-marks').innerHTML = ""
+    allMarks.innerHTML = ""
+}
+
+function updateMarks() {
+    getUserIDByLogin(userLogin)
+        .then(userID => {
+            fetch(`/updateMarks?userID=${userID}`, {method: 'GET', credentials: 'include'})
+                .then(response => response.json())
+                .then(json => {
+                    let resRows = json.rows
+
+                    let marksList = document.getElementById('all-marks')
+                    marksList.innerHTML = ""
+                    resRows.forEach(mark => {
+                        let markDiv = document.createElement('div')
+                        markDiv.innerText = mark.name
+                        markDiv.style.background = mark.color
+                        markDiv.className = "mark"
+                        markDiv.id = "mark_" + mark.id
+
+                        markDiv.addEventListener('click', () => {
+                            if (markDiv.classList.contains('unchecked')) {
+                                markDiv.className = "mark checked"
+                                markDiv.append(getCheckImg())
+                            } else {
+                                markDiv.className = "mark unchecked"
+                                markDiv.innerHTML = mark.name
+                            }
+
+                            toggleMark(openedSticker, mark.name)
+                        })
+
+                        marksList.append(markDiv)
+                    })
+                })
+        })
+}
+
+function addNewMark() {
+    getUserIDByLogin(userLogin)
+        .then(userID => {
+            let newMarkName = document.getElementById('new-mark-name').value
+            let newMarkColor = document.getElementById('new-mark-color').value.slice(1)
+            fetch(`/addNewMark?userID=${userID}&name=${newMarkName}&color=${newMarkColor}`, {method: 'GET', credentials: 'include'})
+                .then(response => response.json())
+                .then(json => {
+                    updateMarks()
+                })
+        })
+}
+
+function toggleMark(stickerID, markName) {
+    fetch(`/toggleMarkBySticker?stickerID=${stickerID}&name=${markName}`, {method: 'GET', credentials: 'include'})
+        .then(response => response.json())
+        .then(json => {
+            updateStickers()
+            // updateEditWindow()
+        })
+}
+
+function getMarkColor(name, userID) {
+    return new Promise((res, rej) => {
+        getMarkIDByName(name, userID)
+            .then(markID => {
+                fetch(`/getMarkColor?markID=${markID}`, {method: 'GET', credentials: 'include'})
+                    .then(response => response.json())
+                    .then(json => {
+                        res(json.color)
+                    })
+            })
+    })
+}
+
+function getMarkIDByName(name, userID) {
+    return new Promise((res, rej) => {
+        fetch(`/getMarkIDByName?userID=${userID}&name=${name}`, {method: 'GET', credentials: 'include'})
+            .then(response => response.json())
+            .then(json => {
+                res(json.markID)
+            })
+    })
+}
+
+function closeMarkListWindow() {
+    let markListWin = document.getElementById('edit-mark-list')
+    markListWin.classList.toggle('d-none')
+}
+
 window.addEventListener('load', () => {
     if (signInBtn) {
         document.getElementById('login-btn').addEventListener('click', logIn)
@@ -197,7 +446,14 @@ window.addEventListener('load', () => {
         document.cookie = ""
     }
     if (userLogin) {
-        userLogin.innerText = parseCookies().userLogin
-        updateStickers(true)
+        userLogin = parseCookies().userLogin
+        document.getElementById('edit-window-close').addEventListener('click', closeEditWindow)
+        document.getElementById('add-mark').addEventListener('click', closeMarkListWindow)
+        document.getElementById('add-new-mark').addEventListener('click', () => {
+            addNewMark()
+        })
+        // document.getElementById('save-changes').addEventListener('click', saveChanges)
+        updateStickers()
+        updateMarks()
     }
 })

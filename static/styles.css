@@ -34,6 +34,8 @@ main {
     padding: 1em;
 }
 
+/* LOGIN */
+
 .login-form {
     position: absolute;
     top: 16em;
@@ -71,6 +73,8 @@ main {
     transition: all 1s;
 }
 
+/* STICKER */
+
 .sticker {
     position: absolute;
     top: 37%;
@@ -79,20 +83,27 @@ main {
     width: 20%;
     min-height: 150px;
 
-    padding: .8em;
-    padding-top: 0;
+    padding: .4em;
 
     background: rgba(255, 255, 255, .92);
     border-bottom-right-radius: 1.5em;
     box-shadow: rgb(120, 120, 120) 5px 5px 15px 0;
 }
 
-.sticker .tools button {
-    padding: 0;
-    margin: 0 0 0 .5em;
+#34 {
+    background: black;
+}
 
-    border: none;
+.sticker .tools div {
+    padding: .1em;
+    margin: 0 0 0 .3em;
+
+    border: 2px solid rgba(0, 0, 0, 0);
     background: none;
+}
+
+.sticker .tools #lock-button.lock {
+    border: 2px solid gold;
 }
 
 .sticker .top {
@@ -101,15 +112,6 @@ main {
 
 .sticker .top .date-time {
     color: gray;
-}
-
-.sticker .top .mark {
-    padding: 0 1em;
-    margin-right: .3em;
-
-    border-radius: 20%;
-    color: white;
-    background: rebeccapurple;
 }
 
 .sticker hr {
@@ -161,10 +163,123 @@ footer {
     color: gray;
 }
 
-.red-border {
-    border: 2px solid red;
+/* StickerEdit Window */
+
+.d-flex, .d-none {
+    transition: all 1s;
+}
+
+.edit-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    background: rgba(0, 0, 0, .8);
+
+    /*display: flex;*/
+}
+
+.edit-sticker {
+    min-width: 40%;
+    min-height: 90%;
+
+    padding: .5% .5% .5% 2%;
+
+    background: white;
+    border-radius: .5em;
+
+    /*display: inherit;*/
+}
+
+.close-edit-window {
+    padding: .3em;
+    margin: 0 0 0 .5em;
+
+    border: none;
+    border-radius: .3em;
+    background: none;
+
+    float: right;
+}
+.close-edit-window:hover {
+    background: rgba(200, 200, 200, .9);
+}
+
+.edit-sticker #title {
+    margin-left: .5em;
+
+    border: none;
+    border-bottom: 2px solid #4848ba;
+}
+
+.edit-sticker .add-mark {
+    border: none;
+    background: none;
+}
+
+.edit-sticker .add-mark img {
+    margin-bottom: 5px;
+}
+
+.edit-sticker .edit-mark-list {
+    position: absolute;
+    top: 28%;
+    left: 34%;
+
+    min-width: 18vw;
+    /*min-height: 27em;*/
+
+    padding: .5em;
+
+    background: white;
+    box-shadow: rgb(120, 120, 120) 5px 5px 15px 0;
+    border-radius: 1em 3em 1em 3em;
+}
+
+.edit-sticker .edit-mark-list .all-marks {
+    margin-top: 1em;
+}
+
+div.mark {
+    padding: .1em .5em;
+    margin-right: .3em;
+    margin-bottom: .5em;
+
+    color: white;
+    /*background: rebeccapurple;*/
+}
+
+.edit-sticker .edit-mark-list #name-new-mark {
+    border: none;
+    border-bottom: 2px solid #4848ba;
+}
+
+.edit-sticker textarea {
+    width: 96%;
+}
+
+/* Tiny Helper */
+
+h4 {
+    margin: 1em 0 .2em 0;
 }
 
 .space {
+    height: .2em;
     clear: both;
+}
+
+.mark {
+    height: 1.7em;
+
+    border-radius: .3em;
+}
+
+/* Dev Styles */
+
+.red-border {
+    border: 2px solid red;
 }

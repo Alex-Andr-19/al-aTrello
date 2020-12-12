@@ -8,6 +8,25 @@ const crypto = require('crypto')
 const app = express()
 const port = 3000
 
+function contain(list, item) {
+    let res = 0
+    for (let i = 0; i < list.length; i++) {
+        if (item === list[i]) {
+            res = 1
+            break
+        }
+    }
+    return res
+}
+
+function withOut(list, item) {
+    let res = []
+    for (let i = 0; i < list.length; i++) {
+        if (list[i] !== item) { res.push(list[i]) }
+    }
+    return res
+}
+
 app.use(express.static('static'))
 
 app.get('/login', (req, res) => {
@@ -20,6 +39,8 @@ app.get('/login', (req, res) => {
 app.get('/checkLogin', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)
+
+    // parseQS = {login: "test_ac", password: "test_ac1"}
 
     let login = parsedQS.login
     let password = parsedQS.password
@@ -44,17 +65,16 @@ app.get('/checkLogin', (req, res) => {
                 let token = buffer.toString('hex');
                 res_obj.redirect = "/"
                 res_obj.id = row.id
+                res.send(JSON.stringify(res_obj))
 
                 db.run('insert into Token (token, user) VALUES (?, ?)', [token, res_obj.id], (err, row) => {
 
                     res_obj.token = token // TODO: записать в cookies
 
-                    res.send(JSON.stringify(res_obj))
                 })
 
             })
         }
-
 
     })
 
@@ -67,16 +87,13 @@ app.get('/reg', (req, res) => {
     let login = parsedQS.login
     let password = parsedQS.password
 
-    db.run('INSERT INTO User (login, password) VALUES (?, ?)', [login, password], (er, row) => {
+    db.run('INSERT INTO User (login, password) VALUES (?, ?)', [login, password], (er) => {
 
         if (er) {
             res.send(JSON.stringify({
                 success: false,
                 msg: "Something wrong"
             }))
-            console.log(er.message)
-
-            return
         }
 
         res.send(JSON.stringify({
@@ -87,37 +104,78 @@ app.get('/reg', (req, res) => {
     });
 })
 
-app.get('/getUserByLogin', (req, res) => {
+app.get('/getUserIDByLogin', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)
 
     let login = parsedQS.login
-
+    let resObj = {
+        er: "",
+        userID: 0
+    }
     db.get('SELECT id From User Where login = (?)', [login], (er, row) => {
 
         if (er) {
             console.log(er)
-            res.send(JSON.stringify({
-                er: er.msg,
-                res_row: {}
-            }))
+            resObj.er = er.msg
         } else {
-            db.all('SELECT id, content, date, marks, position From Sticker Where user = (?)', [row.id], (er, rows) => {
-
-                if (er) {
-                    console.log(er)
-                } else {
-                    res.send(JSON.stringify({
-                        res_rows: rows,
-                        user_id: row.id
-                    }))
-                }
-
-            })
+            resObj.userID = row.id
         }
 
-    })
+        res.send(JSON.stringify(resObj))
 
+    })
+})
+
+app.get('/getStickersByUser', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let userID = parsedQS.userID
+
+    let sql = 'SELECT id, content, date, marks, position, title From Sticker Where user = (?)'
+    let resObj = {
+        er: "",
+        stickers: []
+    }
+
+    db.all(sql, [userID], (er, rows) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.stickers = rows
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+})
+
+app.get('/getStickerMarks', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let stickerID = parsedQS.stickerID
+
+    let sql = 'SELECT marks FROM Sticker WHERE id = (?)'
+    let resObj = {
+        er: "",
+        marks: []
+    }
+
+    db.get(sql, [stickerID], (er, row) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.marks = row.marks.split(',')
+        }
+
+        res.send(JSON.stringify(resObj))
+
+    })
 })
 
 app.get('/createNewSticker', (req, res) => {
@@ -127,7 +185,7 @@ app.get('/createNewSticker', (req, res) => {
     let id = parsedQS.id
 
     let sql = 'INSERT INTO Sticker ("user", "content", "date", "marks") VALUES (?, ?, ?, ?)'
-    db.run(sql, [id, "", new Date(), ""], (er) => {
+    db.run(sql, [id, "", new Date() + (3 * 60 * 60 * 1000), ""], (er) => {
         if (er) {
             console.log(er)
             res.send(JSON.stringify({
@@ -178,6 +236,154 @@ app.get('/delSticker', (req, res) => {
                 success: true
             }))
         }
+    })
+})
+
+app.get('/updateMarks', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let userID = parsedQS.userID
+    let sql = 'SELECT id, name, color FROM Mark WHERE user = (?)'
+
+    let resObj = {
+        erMsg: "",
+        rows: []
+    }
+
+    db.all(sql, [userID], (er, rows) => {
+        if (er) {
+            resObj.erMsg = er.msg
+        } else {
+            resObj.rows = rows
+        }
+        res.send(JSON.stringify(resObj))
+    })
+})
+
+app.get('/addNewMark', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let userID = parsedQS.userID
+    let name = parsedQS.name
+    let color = "#" + parsedQS.color
+    console.log("Color of new Mark: " + color)
+
+    let sql = 'INSERT INTO Mark ("name", "color", "user") VALUES (?, ?, ?)'
+    let resObj = {
+        er: "",
+        success: false
+    }
+    db.run(sql, [name, color, userID], (er) => {
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.success = true
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+})
+
+app.get('/toggleMarkBySticker', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let name = parsedQS.name
+    let stickerID = parsedQS.stickerID
+
+    let sql = 'SELECT marks FROM Sticker WHERE id = (?)'
+
+    let resObj = {
+        er: "",
+        success: false
+    }
+
+    db.get(sql, [stickerID], (er, row) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+            res.send(JSON.stringify(resObj))
+        } else {
+            sql = 'UPDATE Sticker SET marks = (?) WHERE id = (?)'
+            let marks = row.marks.split(',')
+
+            if (contain(marks, name)) {
+                marks = withOut(marks, name)
+            } else {
+                marks.push(name)
+            }
+
+            db.run(sql, [marks, stickerID], (er) => {
+                if (er) {
+                    console.log(er)
+                    resObj.er = er.msg
+                } else {
+                    resObj.success = true
+                }
+                res.send(JSON.stringify(resObj))
+            })
+
+        }
+
+
+    })
+
+})
+
+app.get('/getMarkColor', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let markID = parsedQS.markID
+
+    let sql = 'SELECT color FROM Mark WHERE id = (?)'
+    let resObj = {
+        er: "",
+        color: ""
+    }
+
+    db.get(sql, [markID], (er, row) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.color = row.color
+        }
+
+        res.send(JSON.stringify(resObj))
+
+    })
+})
+
+app.get('/getMarkIDByName', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let userID = parsedQS.userID
+    let name = parsedQS.name
+
+    let sql = 'SELECT id FROM Mark WHERE user = (?) AND name = (?)'
+    let resObj = {
+        er: "",
+        markID: 0
+    }
+
+    db.get(sql, [userID, name], (er, row) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.markID = row.id
+        }
+
+        res.send(JSON.stringify(resObj))
+
     })
 })
 
