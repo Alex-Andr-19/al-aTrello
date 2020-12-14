@@ -3,7 +3,8 @@ let signInBtn = document.getElementById('login-btn')
 let startDragX = 0
 let startDragY = 0
 
-let userLogin = document.getElementById('user-login').innerText
+let userLogin = document.getElementById('user-login')
+
 let openedSticker = 0
 
 function parseCookies() {
@@ -120,6 +121,7 @@ function logIn(ev) {
     fetch(`/checkLogin?login=${login}&password=${password}`, {method: 'GET', credentials: 'include'})
     .then(response => response.json())
     .then(json => {
+        console.log(json)
         if (json.redirect) {
             document.cookie = `userLogin=${login};`
             location.href = json.redirect
@@ -165,7 +167,7 @@ function getUserIDByLogin(login) {
 }
 
 function updateStickers() {
-    getUserIDByLogin(userLogin)
+    getUserIDByLogin(userLogin.innerText)
         .then(userID => {
             getStickers().then(stickers => {
                 showStickers(stickers.stickers, userID)
@@ -175,7 +177,7 @@ function updateStickers() {
 
 function getStickers() {
     return new Promise((res, rej) => {
-        getUserIDByLogin(userLogin)
+        getUserIDByLogin(userLogin.innerText)
             .then(userID => {
                 fetch(`/getStickersByUser?userID=${userID}`, {method: 'GET', credentials: 'include'})
                     .then(response => response.json())
@@ -266,7 +268,7 @@ function showStickers(stickers, userID) {
 }
 
 function createNewSticker() {
-    getUserIDByLogin(userLogin)
+    getUserIDByLogin(userLogin.innerText)
         .then(userID => {
             fetch(`/createNewSticker?id=${userID}`, {method: 'GET', credentials: 'include'})
                 .then(response => {
@@ -336,7 +338,7 @@ function updateEditWindow() {
     let userID = 0
     getStickerMarks(openedSticker).then(marks => stickerMarks.marks = marks.join(','))
     console.log(stickerMarks)
-    getUserIDByLogin(userLogin).then(response => userID = response)
+    getUserIDByLogin(userLogin.innerText).then(response => userID = response)
 
     let markHTML = createMarkListTag(stickerMarks, userID)
     markHTML.classList.toggle('flex-row')
@@ -350,12 +352,14 @@ function closeEditWindow() {
     editWindow.classList.toggle('d-flex')
     editWindow.classList.toggle('d-none')
 
-    document.getElementById('all-marks').innerHTML = ""
-    allMarks.innerHTML = ""
+    let allMarks = document.getElementById('all-marks')
+    for (let i = 0; i < allMarks.children.length; i++) {
+        allMarks.children[i].innerHTML = allMarks.children[i].innerText
+    }
 }
 
 function updateMarks() {
-    getUserIDByLogin(userLogin)
+    getUserIDByLogin(userLogin.innerText)
         .then(userID => {
             fetch(`/updateMarks?userID=${userID}`, {method: 'GET', credentials: 'include'})
                 .then(response => response.json())
@@ -374,7 +378,7 @@ function updateMarks() {
                         markDiv.addEventListener('click', () => {
                             if (markDiv.classList.contains('unchecked')) {
                                 markDiv.className = "mark checked"
-                                markDiv.append(getCheckImg())
+                                markDiv.append( getCheckImg() )
                             } else {
                                 markDiv.className = "mark unchecked"
                                 markDiv.innerHTML = mark.name
@@ -390,7 +394,7 @@ function updateMarks() {
 }
 
 function addNewMark() {
-    getUserIDByLogin(userLogin)
+    getUserIDByLogin(userLogin.innerText)
         .then(userID => {
             let newMarkName = document.getElementById('new-mark-name').value
             let newMarkColor = document.getElementById('new-mark-color').value.slice(1)
@@ -404,11 +408,7 @@ function addNewMark() {
 
 function toggleMark(stickerID, markName) {
     fetch(`/toggleMarkBySticker?stickerID=${stickerID}&name=${markName}`, {method: 'GET', credentials: 'include'})
-        .then(response => response.json())
-        .then(json => {
-            updateStickers()
-            // updateEditWindow()
-        })
+        .then(response => { updateStickers() })
 }
 
 function getMarkColor(name, userID) {
@@ -439,6 +439,17 @@ function closeMarkListWindow() {
     markListWin.classList.toggle('d-none')
 }
 
+function saveChanges() {
+    let newTitle = document.getElementById('title').value
+    let newContent = document.getElementById('content').value
+
+    fetch(`/saveChanges?stickerID=${openedSticker}&title=${newTitle}&content=${newContent}`)
+        .then(response => {
+            updateStickers()
+            closeEditWindow()
+        })
+}
+
 window.addEventListener('load', () => {
     if (signInBtn) {
         document.getElementById('login-btn').addEventListener('click', logIn)
@@ -446,13 +457,13 @@ window.addEventListener('load', () => {
         document.cookie = ""
     }
     if (userLogin) {
-        userLogin = parseCookies().userLogin
+        userLogin.innerText = parseCookies().userLogin
         document.getElementById('edit-window-close').addEventListener('click', closeEditWindow)
         document.getElementById('add-mark').addEventListener('click', closeMarkListWindow)
+        document.getElementById('save-changes').addEventListener('click', saveChanges)
         document.getElementById('add-new-mark').addEventListener('click', () => {
             addNewMark()
         })
-        // document.getElementById('save-changes').addEventListener('click', saveChanges)
         updateStickers()
         updateMarks()
     }

@@ -40,13 +40,11 @@ app.get('/checkLogin', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)
 
-    // parseQS = {login: "test_ac", password: "test_ac1"}
-
     let login = parsedQS.login
     let password = parsedQS.password
 
     db.get('SELECT id From User Where login = (?) AND password = (?)', [login, password], (er, row) => {
-        let res_obj = {
+        let resObj = {
             redirect: "",
             msg: "",
             token: "",
@@ -55,23 +53,23 @@ app.get('/checkLogin', (req, res) => {
 
         if (er || row === undefined) {
             if (er) {
-                res_obj.msg = er.message
+                resObj.msg = er.message
             } else {
-                res_obj.msg = "Success false!!!"
+                resObj.msg = "Success false!!!"
             }
-            res.send(JSON.stringify(res_obj))
+            res.send(JSON.stringify(resObj))
         } else { // Успешно
             crypto.randomBytes(24, (err, buffer) => {
-                let token = buffer.toString('hex');
-                res_obj.redirect = "/"
-                res_obj.id = row.id
-                res.send(JSON.stringify(res_obj))
-
-                db.run('insert into Token (token, user) VALUES (?, ?)', [token, res_obj.id], (err, row) => {
-
-                    res_obj.token = token // TODO: записать в cookies
-
-                })
+                // let token = buffer.toString('hex');
+                resObj.redirect = "/"
+                resObj.id = row.id
+                res.send(JSON.stringify(resObj))
+                //
+                // db.run('insert into Token (token, user) VALUES (?, ?)', [token, resObj.id], (err, row) => {
+                //
+                //     resObj.token = token // TODO: записать в cookies
+                //
+                // })
 
             })
         }
@@ -380,6 +378,34 @@ app.get('/getMarkIDByName', (req, res) => {
             resObj.er = er.msg
         } else {
             resObj.markID = row.id
+        }
+
+        res.send(JSON.stringify(resObj))
+
+    })
+})
+
+app.get('/saveChanges', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let stickerID = parsedQS.stickerID
+    let newTitle = parsedQS.title
+    let newContent = parsedQS.content
+
+    let sql = 'UPDATE Sticker SET title = (?), content = (?) WHERE id = (?)'
+    let resObj = {
+        er: "",
+        success: false
+    }
+
+    db.run(sql, [newTitle, newContent, stickerID], (er) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.success = true
         }
 
         res.send(JSON.stringify(resObj))
