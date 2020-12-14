@@ -239,6 +239,10 @@ footer {
     margin-top: 1em;
 }
 
+#marks {
+    min-height: 35px; !important;
+}
+
 div.mark {
     padding: .1em .5em;
     margin-right: .3em;

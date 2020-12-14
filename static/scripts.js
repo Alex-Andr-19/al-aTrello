@@ -333,18 +333,25 @@ function openEditWindow(sticker, userID) {
 function updateEditWindow() {
     let allStickerMarks = document.getElementById('marks')
     allStickerMarks.innerHTML = ""
+    getUserIDByLogin(userLogin.innerText)
+        .then(userID => {
+            getStickers().then(stickers => {
+                let sticker
+                // console.log(stickers.stickers)
+                for (let i = 0; i < stickers.stickers.length; i++) {
+                    // console.log(stickers[i].id)
+                    if (stickers.stickers[i].id === openedSticker) {
+                        sticker = stickers.stickers[i]
+                        break
+                    }
+                }
+                console.log(sticker)
+                let markHTML = createMarkListTag(sticker, userID)
+                markHTML.classList.toggle('justify-content-between')
 
-    let stickerMarks = {marks: []}
-    let userID = 0
-    getStickerMarks(openedSticker).then(marks => stickerMarks.marks = marks.join(','))
-    console.log(stickerMarks)
-    getUserIDByLogin(userLogin.innerText).then(response => userID = response)
-
-    let markHTML = createMarkListTag(stickerMarks, userID)
-    markHTML.classList.toggle('flex-row')
-    markHTML.classList.toggle('justify-content-between')
-
-    allStickerMarks.append(markHTML)
+                allStickerMarks.append(markHTML)
+            })
+        })
 }
 
 function closeEditWindow() {
@@ -408,7 +415,10 @@ function addNewMark() {
 
 function toggleMark(stickerID, markName) {
     fetch(`/toggleMarkBySticker?stickerID=${stickerID}&name=${markName}`, {method: 'GET', credentials: 'include'})
-        .then(response => { updateStickers() })
+        .then(response => {
+            updateStickers()
+            updateEditWindow()
+        })
 }
 
 function getMarkColor(name, userID) {
