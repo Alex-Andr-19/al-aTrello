@@ -78,8 +78,6 @@ function createTools(sticker, userID) {
 function createMarkListTag(sticker, userID) {
     let markListTag = document.createElement("div")
     markListTag.className = "mark-list d-flex justify-content-between align-items-center"
-    // console.log('createMarkListTag get: ' + sticker.marks)
-    // console.log('For: ' + sticker.id)
     let markList = sticker.marks.split(',')
     markList.forEach(markName => {
         if (markName) {
@@ -113,6 +111,19 @@ function getCheckImg() {
     return imgContainer
 }
 
+function validMarkForSticker(stickerID, markName, markTag) {
+    fetch(`/validMarkForSticker?stickerID=${stickerID}&markName=${markName}`)
+        .then(response => response.json())
+        .then(json => {
+            if (json.valid) {
+                markTag.append(getCheckImg())
+                markTag.classList += " checked"
+            } else {
+                markTag.classList += " unchecked"
+            }
+        })
+}
+
 function logIn(ev) {
     ev.preventDefault()
     let login = document.getElementById('login').value
@@ -121,7 +132,6 @@ function logIn(ev) {
     fetch(`/checkLogin?login=${login}&password=${password}`, {method: 'GET', credentials: 'include'})
     .then(response => response.json())
     .then(json => {
-        console.log(json)
         if (json.redirect) {
             document.cookie = `userLogin=${login};`
             location.href = json.redirect
@@ -337,15 +347,12 @@ function updateEditWindow() {
         .then(userID => {
             getStickers().then(stickers => {
                 let sticker
-                // console.log(stickers.stickers)
                 for (let i = 0; i < stickers.stickers.length; i++) {
-                    // console.log(stickers[i].id)
                     if (stickers.stickers[i].id === openedSticker) {
                         sticker = stickers.stickers[i]
                         break
                     }
                 }
-                console.log(sticker)
                 let markHTML = createMarkListTag(sticker, userID)
                 markHTML.classList.toggle('justify-content-between')
 
@@ -363,6 +370,8 @@ function closeEditWindow() {
     for (let i = 0; i < allMarks.children.length; i++) {
         allMarks.children[i].innerHTML = allMarks.children[i].innerText
     }
+
+    openedSticker = 0
 }
 
 function updateMarks() {
@@ -381,6 +390,9 @@ function updateMarks() {
                         markDiv.style.background = mark.color
                         markDiv.className = "mark"
                         markDiv.id = "mark_" + mark.id
+                        if (openedSticker) {
+                            validMarkForSticker(openedSticker, mark.name, markDiv)
+                        }
 
                         markDiv.addEventListener('click', () => {
                             if (markDiv.classList.contains('unchecked')) {

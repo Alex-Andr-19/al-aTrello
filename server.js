@@ -259,6 +259,36 @@ app.get('/updateMarks', (req, res) => {
     })
 })
 
+app.get('/validMarkForSticker', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let stickerID = parsedQS.stickerID
+    let markName = parsedQS.markName
+
+    let sql = 'SELECT marks FROM Sticker WHERE id = (?)'
+    let resObj = {
+        er: "",
+        valid: false
+    }
+
+    db.get(sql, [stickerID], (er, row) => {
+        if (er) {
+            resObj.er = er.msg
+        } else {
+            let markList = row.marks.split(',')
+            for (let name of markList) {
+                if (name === markName) {
+                    resObj.valid = true
+                    break
+                }
+            }
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+})
+
 app.get('/addNewMark', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)
@@ -266,7 +296,6 @@ app.get('/addNewMark', (req, res) => {
     let userID = parsedQS.userID
     let name = parsedQS.name
     let color = "#" + parsedQS.color
-    console.log("Color of new Mark: " + color)
 
     let sql = 'INSERT INTO Mark ("name", "color", "user") VALUES (?, ?, ?)'
     let resObj = {
