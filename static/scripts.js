@@ -1,5 +1,8 @@
 let signInBtn = document.getElementById('login-btn')
 
+let search = document.getElementById('search')
+let searchText = ""
+
 let startDragX = 0
 let startDragY = 0
 
@@ -194,6 +197,16 @@ function getStickers() {
                     .then(json => {
                         res(json)
                     })
+            })
+    })
+}
+
+function getStickersByContent(content) {
+    return new Promise((res, rej) => {
+        fetch(`/getStickersByContent?content=${content}`)
+            .then(response => response.json())
+            .then(json => {
+                res(json)
             })
     })
 }
@@ -490,3 +503,39 @@ window.addEventListener('load', () => {
         updateMarks()
     }
 })
+
+setInterval(() => {
+    if (search.value !== searchText) {
+        searchText = search.value
+        let stickerList = document.getElementsByClassName('sticker')
+        if (searchText) {
+            getStickersByContent(searchText)
+                .then(response => {
+                    let searchedStickers = response.ids
+                    if (searchedStickers.length) {
+
+                        for (let sticker of stickerList) {
+                            let stickerID = Number(sticker.id.split('_')[1])
+                            for (let searchedStickerID of searchedStickers) {
+                                if (searchedStickerID.id === stickerID) {
+                                    sticker.classList.add('searched')
+                                    break
+                                } else {
+                                    sticker.classList.remove('searched')
+                                }
+                            }
+                        }
+
+                    } else {
+                        for (let sticker of stickerList) {
+                            sticker.classList.remove('searched')
+                        }
+                    }
+                })
+        } else {
+            for (let sticker of stickerList) {
+                sticker.classList.remove('searched')
+            }
+        }
+    }
+}, 300)

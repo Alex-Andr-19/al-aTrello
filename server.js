@@ -150,6 +150,32 @@ app.get('/getStickersByUser', (req, res) => {
     })
 })
 
+app.get('/getStickersByContent', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let content = parsedQS.content
+
+    let sql = 'SELECT id FROM Sticker WHERE instr(content, (?))'
+    let resObj = {
+        er: "",
+        ids: []
+    }
+
+    db.all(sql, [content], (er, rows) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.ids = rows
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+
+})
+
 app.get('/getStickerMarks', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)

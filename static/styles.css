@@ -88,6 +88,8 @@ main {
     background: rgba(255, 255, 255, .92);
     border-bottom-right-radius: 1.5em;
     box-shadow: rgb(120, 120, 120) 5px 5px 15px 0;
+
+    transition: box-shadow .3s, background .3s;
 }
 
 .sticker .tools div {
@@ -134,6 +136,11 @@ main {
     width: 100%;
 }
 
+.searched {
+    box-shadow: orangered 5px 5px 15px 5px;
+    background: white;
+}
+
 /* FOOTER */
 
 footer {
@@ -174,8 +181,6 @@ footer {
     height: 100vh;
 
     background: rgba(0, 0, 0, .8);
-
-    /*display: flex;*/
 }
 
 .edit-sticker {
@@ -186,8 +191,6 @@ footer {
 
     background: white;
     border-radius: .5em;
-
-    /*display: inherit;*/
 }
 
 .close-edit-window {
