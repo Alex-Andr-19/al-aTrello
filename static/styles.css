@@ -136,9 +136,29 @@ main {
     width: 100%;
 }
 
-.searched {
-    box-shadow: orangered 5px 5px 15px 5px;
+.searched-contentб .searched-title, .searched-mark {
     background: white;
+}
+.searched-content {
+    box-shadow: orangered 5px 5px 15px 5px;
+}
+.searched-title {
+    box-shadow: springgreen -5px -5px 15px 5px;
+}
+.searched-mark {
+    box-shadow: mediumpurple -5px 5px 15px 5px;
+}
+.searched-content.searched-title {
+    box-shadow: springgreen -5px -5px 15px 5px, orangered 5px 5px 15px 5px;
+}
+.searched-content.searched-mark {
+    box-shadow: springgreen -5px -5px 15px 5px, mediumpurple -5px 5px 15px 5px;
+}
+.searched-title.searched-mark {
+    box-shadow: orangered 5px 5px 15px 5px, mediumpurple -5px 5px 15px 5px;
+}
+.searched-content.searched-title.searched-mark {
+    box-shadow: springgreen -5px -5px 15px 5px, orangered 5px 5px 15px 5px, mediumpurple -5px 5px 15px 5px;
 }
 
 /* FOOTER */
@@ -252,7 +272,7 @@ div.mark {
     margin-bottom: .5em;
 
     color: white;
-    /*background: rebeccapurple;*/
+    /*background: mediumpurple;*/
 }
 
 .edit-sticker .edit-mark-list #name-new-mark {

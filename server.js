@@ -176,6 +176,58 @@ app.get('/getStickersByContent', (req, res) => {
 
 })
 
+app.get('/getStickersByTitle', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let title = parsedQS.title
+
+    let sql = 'SELECT id FROM Sticker WHERE instr(title, (?))'
+    let resObj = {
+        er: "",
+        ids: []
+    }
+
+    db.all(sql, [title], (er, rows) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.ids = rows
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+
+})
+
+app.get('/getStickersByMark', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let mark = parsedQS.mark
+
+    let sql = 'SELECT id FROM Sticker WHERE instr(marks, (?))'
+    let resObj = {
+        er: "",
+        ids: []
+    }
+
+    db.all(sql, [mark], (er, rows) => {
+
+        if (er) {
+            console.log(er)
+            resObj.er = er.msg
+        } else {
+            resObj.ids = rows
+        }
+
+        res.send(JSON.stringify(resObj))
+    })
+
+})
+
 app.get('/getStickerMarks', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)

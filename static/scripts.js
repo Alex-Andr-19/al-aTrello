@@ -211,6 +211,20 @@ function getStickersByContent(content) {
     })
 }
 
+function getStickersByTitle(title) {
+    return new Promise((res, rej) => {
+        fetch(`/getStickersByTitle?title=${title}`, {method: 'GET'})
+            .then(resolve => res(resolve.json()))
+    })
+}
+
+function getStickersByMark(mark) {
+    return new Promise((res, rej) => {
+        fetch(`/getStickersByMark?mark=${mark}`, {method: 'GET'})
+            .then(resolve => res(resolve.json()))
+    })
+}
+
 function updateStickerPosition(stickerID, sticker) {
     fetch(`/updateStickerPos?id=${stickerID}&pos=${sticker.style.top + ',' + sticker.style.left}`,
         {method: 'GET', credentials: 'include'})
@@ -333,7 +347,8 @@ function openEditWindow(sticker, userID) {
     allStickerMarks.append(markHTML)
 
     let stickerContent = document.getElementById('content')
-    stickerContent.innerText = sticker.content
+    console.log(stickerContent)
+    stickerContent.value = sticker.content
 
     let editWindow = document.getElementById('edit-window')
 
@@ -485,6 +500,27 @@ function saveChanges() {
         })
 }
 
+function giveSearchedStickers(searchedStickers, className) {
+    let stickerList = document.getElementsByClassName('sticker')
+    if (searchedStickers.length) {
+        for (let sticker of stickerList) {
+
+            let stickerID = Number(sticker.id.split('_')[1])
+            for (let searchedStickerID of searchedStickers) {
+                if (searchedStickerID.id === stickerID) {
+                    sticker.classList.add(className)
+                    break
+                } else {
+                    sticker.classList.remove(className)
+                }
+            }
+
+        }
+    } else {
+        for (let sticker of stickerList) { sticker.classList.remove(className) }
+    }
+}
+
 window.addEventListener('load', () => {
     if (signInBtn) {
         document.getElementById('login-btn').addEventListener('click', logIn)
@@ -510,31 +546,18 @@ setInterval(() => {
         let stickerList = document.getElementsByClassName('sticker')
         if (searchText) {
             getStickersByContent(searchText)
-                .then(response => {
-                    let searchedStickers = response.ids
-                    if (searchedStickers.length) {
+                .then(response => giveSearchedStickers(response.ids, 'searched-content'))
 
-                        for (let sticker of stickerList) {
-                            let stickerID = Number(sticker.id.split('_')[1])
-                            for (let searchedStickerID of searchedStickers) {
-                                if (searchedStickerID.id === stickerID) {
-                                    sticker.classList.add('searched')
-                                    break
-                                } else {
-                                    sticker.classList.remove('searched')
-                                }
-                            }
-                        }
+            getStickersByTitle(searchText)
+                .then(response => giveSearchedStickers(response.ids, 'searched-title'))
 
-                    } else {
-                        for (let sticker of stickerList) {
-                            sticker.classList.remove('searched')
-                        }
-                    }
-                })
+            getStickersByMark(searchText)
+                .then(response => giveSearchedStickers(response.ids, 'searched-mark'))
         } else {
             for (let sticker of stickerList) {
-                sticker.classList.remove('searched')
+                sticker.classList.remove('searched-content')
+                sticker.classList.remove('searched-title')
+                sticker.classList.remove('searched-mark')
             }
         }
     }
