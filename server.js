@@ -392,6 +392,32 @@ app.get('/addNewMark', (req, res) => {
     })
 })
 
+app.get('/markDel', (req, res) => {
+    let parsedUrl = url.parse(req.url)
+    let parsedQS = queryString.parse(parsedUrl.query)
+
+    let markID = parsedQS.markID
+
+    let sql = 'DELETE FROM Mark WHERE id = (?)'
+    let resObj = {
+        er: '',
+        success: false
+    }
+
+    db.run(sql, [markID], (er) => {
+
+        if (er) {
+            resObj.er = er.msg
+            console.log(er)
+        } else {
+            resObj.success = true
+        }
+
+        res.send(JSON.stringify(resObj))
+
+    })
+})
+
 app.get('/toggleMarkBySticker', (req, res) => {
     let parsedUrl = url.parse(req.url)
     let parsedQS = queryString.parse(parsedUrl.query)

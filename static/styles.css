@@ -136,7 +136,9 @@ main {
     width: 100%;
 }
 
-.searched-contentб .searched-title, .searched-mark {
+
+
+.searched-content, .searched-title, .searched-mark {
     background: white;
 }
 .searched-content {

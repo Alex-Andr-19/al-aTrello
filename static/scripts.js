@@ -6,6 +6,9 @@ let searchText = ""
 let startDragX = 0
 let startDragY = 0
 
+let vw = (window.innerWidth / 100)
+let vh = (window.innerHeight / 100)
+
 let userLogin = document.getElementById('user-login')
 
 let openedSticker = 0
@@ -20,6 +23,16 @@ function parseCookies() {
     });
 
     return list;
+}
+
+function scope(a, min, max) {
+    if (a >= min && a <= max) {
+        return a
+    } else if (a < min){
+        return min
+    } else if (a > max) {
+        return max
+    }
 }
 
 function createTools(sticker, userID) {
@@ -258,8 +271,11 @@ function showStickers(stickers, userID) {
             startDragY = ev.offsetY
         })
         sticker.addEventListener('dragend', (ev) => {
-            sticker.style.top = (ev.pageY - startDragY) + 'px'
-            sticker.style.left = (ev.pageX - startDragX) + 'px'
+            console.log('1em = ' + (window.innerWidth / 100))
+            vw = (window.innerWidth / 100)
+            vh = (window.innerHeight / 100)
+            sticker.style.top = scope((ev.pageY - startDragY) / vh, 8, 69.5) + 'vh'
+            sticker.style.left = scope((ev.pageX - startDragX) / vw, .5, 79.5) + 'vw'
             updateStickerPosition(stickerObj.id, sticker)
         })
 
@@ -411,6 +427,7 @@ function updateMarks() {
                     let resRows = json.rows
 
                     let marksList = document.getElementById('all-marks')
+                    console.log(marksList)
                     marksList.innerHTML = ""
                     resRows.forEach(mark => {
                         let markDiv = document.createElement('div')
@@ -434,6 +451,7 @@ function updateMarks() {
                             toggleMark(openedSticker, mark.name)
                         })
 
+                        markDiv.append(markDelImg(mark.id))
                         marksList.append(markDiv)
                     })
                 })
@@ -453,11 +471,39 @@ function addNewMark() {
         })
 }
 
-function toggleMark(stickerID, markName) {
+function markDelImg(markID) {
+    let closeBTN = document.createElement('div')
+    closeBTN.style.height = "inherit"
+    closeBTN.style.marginTop = "-0.1em"
+    closeBTN.style.marginLeft = ".3em"
+    closeBTN.style.float = "right"
+    closeBTN.style.display = "flex"
+    closeBTN.style.alignItems = "center"
+
+    closeBTN.addEventListener('click', () => {
+        toggleMark(openedSticker, document.getElementById('mark_' + markID).innerText, false    )
+        markDelReq(markID)
+        updateMarks()
+    })
+
+    let delImg = document.createElement('img')
+    delImg.src = './assets/close.png'
+    delImg.width = 11
+
+    closeBTN.append(delImg)
+
+    return closeBTN
+}
+
+function markDelReq(markID) {
+    fetch(`markDel?markID=${markID}`, {method: 'GET'})
+}
+
+function toggleMark(stickerID, markName, isEditWinUpdate=true) {
     fetch(`/toggleMarkBySticker?stickerID=${stickerID}&name=${markName}`, {method: 'GET', credentials: 'include'})
         .then(response => {
             updateStickers()
-            updateEditWindow()
+            if (isEditWinUpdate) { updateEditWindow() }
         })
 }
 
