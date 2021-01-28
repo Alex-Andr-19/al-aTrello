@@ -2,9 +2,44 @@ const express = require('express')
 const sqlite3 = require('sqlite3').verbose()
 const url = require('url')
 const queryString = require('querystring')
-const db = new sqlite3.Database('./db.sqlite')
-const crypto = require('crypto')
+const fs = require('fs')
 
+async function db_init(name) {
+    const exists = await new Promise(res => {
+        fs.exists(name, exists => res(exists))
+    })
+    const db = new sqlite3.Database(name)
+    if (!exists) {
+        console.log("Database file doesn't exist")
+        db.run('CREATE TABLE "Mark" (\n' +
+            '  "id" INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '  "name" TEXT NOT NULL,\n' +
+            '  "color" TEXT NOT NULL,\n' +
+            '  "user" INTEGER\n' +
+            ');')
+        db.run(
+            'CREATE TABLE "Sticker" (\n' +
+            '  "id" INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '  "content" TEXT NOT NULL,\n' +
+            '  "date" DATETIME NOT NULL,\n' +
+            '  "user" INTEGER,\n' +
+            '  "marks" TEXT NOT NULL,\n' +
+            '  "position" TEXT DEFAULT \'37%,40%\' NOT NULL,\n' +
+            '  "title" TEXT DEFAULT \'DEFAULT_TEXT\' NOT NULL\n' +
+            ');')
+        db.run(
+            'CREATE TABLE "User" (\n' +
+            '  "id" INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '  "login" TEXT UNIQUE NOT NULL,\n' +
+            '  "password" TEXT NOT NULL\n' +
+            ')')
+    } else {
+        console.log("Database file exists")
+    }
+    return db
+}
+
+var db;
 const app = express()
 const port = 3000
 
@@ -32,7 +67,7 @@ app.use(express.static('static'))
 app.get('/login', (req, res) => {
     res.sendFile(
         './static/login.html',
-        {root: __dirname},
+        { root: __dirname },
     )
 })
 
@@ -546,6 +581,11 @@ app.get('/saveChanges', (req, res) => {
     })
 })
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-})
+db_init('./db.sqlite')
+    .then(async (_db) => {
+        db = new sqlite3.Database('./db.sqlite')
+        console.log(db)
+        app.listen(port, () => {
+            console.log(`Example app listening at http://localhost:${port}`)
+        })
+    })
