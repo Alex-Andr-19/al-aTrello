@@ -342,7 +342,6 @@ app.get('/delSticker', (req, res) => {
         if (er) {
             console.log(er)
         } else {
-            console.log("All right!!!")
             res.send(JSON.stringify({
                 success: true
             }))
@@ -584,7 +583,6 @@ app.get('/saveChanges', (req, res) => {
 db_init('./db.sqlite')
     .then(async (_db) => {
         db = new sqlite3.Database('./db.sqlite')
-        console.log(db)
         app.listen(port, () => {
             console.log(`Example app listening at http://localhost:${port}`)
         })
