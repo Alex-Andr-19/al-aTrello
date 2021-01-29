@@ -207,8 +207,8 @@ function updateStickers() {
 function getStickers() {
     return new Promise((res, rej) => {
         getUserIDByLogin(userLogin.innerText)
-            .then(userID => {
-                fetch(`/getStickersByUser?userID=${userID}`, {method: 'GET', credentials: 'include'})
+            .then(resObj => {
+                fetch(`/getStickersByUser?userID=${resObj.userID}`, {method: 'GET', credentials: 'include'})
                     .then(response => response.json())
                     .then(json => {
                         res(json)
@@ -324,8 +324,8 @@ function showStickers(stickers, userID) {
 
 function createNewSticker() {
     getUserIDByLogin(userLogin.innerText)
-        .then(userID => {
-            fetch(`/createNewSticker?id=${userID}`, {method: 'GET', credentials: 'include'})
+        .then(res => {
+            fetch(`/createNewSticker?id=${res.userID}`, {method: 'GET', credentials: 'include'})
                 .then(response => {
                     updateStickers()
                 })
@@ -389,7 +389,7 @@ function updateEditWindow() {
     let allStickerMarks = document.getElementById('marks')
     allStickerMarks.innerHTML = ""
     getUserIDByLogin(userLogin.innerText)
-        .then(userID => {
+        .then(res => {
             getStickers().then(stickers => {
                 let sticker
                 for (let i = 0; i < stickers.stickers.length; i++) {
@@ -398,7 +398,7 @@ function updateEditWindow() {
                         break
                     }
                 }
-                let markHTML = createMarkListTag(sticker, userID)
+                let markHTML = createMarkListTag(sticker, res.userID)
                 markHTML.classList.toggle('justify-content-between')
 
                 allStickerMarks.append(markHTML)
@@ -421,8 +421,8 @@ function closeEditWindow() {
 
 function updateMarks() {
     getUserIDByLogin(userLogin.innerText)
-        .then(userID => {
-            fetch(`/updateMarks?userID=${userID}`, {method: 'GET', credentials: 'include'})
+        .then(res => {
+            fetch(`/updateMarks?userID=${res.userID}`, {method: 'GET', credentials: 'include'})
                 .then(response => response.json())
                 .then(json => {
                     let resRows = json.rows
@@ -460,10 +460,10 @@ function updateMarks() {
 
 function addNewMark() {
     getUserIDByLogin(userLogin.innerText)
-        .then(userID => {
+        .then(res => {
             let newMarkName = document.getElementById('new-mark-name').value
             let newMarkColor = document.getElementById('new-mark-color').value.slice(1)
-            fetch(`/addNewMark?userID=${userID}&name=${newMarkName}&color=${newMarkColor}`, {method: 'GET', credentials: 'include'})
+            fetch(`/addNewMark?userID=${res.userID}&name=${newMarkName}&color=${newMarkColor}`, {method: 'GET', credentials: 'include'})
                 .then(response => response.json())
                 .then(json => {
                     updateMarks()
