@@ -3,6 +3,7 @@ const sqlite3 = require('sqlite3').verbose()
 const url = require('url')
 const queryString = require('querystring')
 const fs = require('fs')
+const crypto = require('crypto')
 
 async function db_init(name) {
     const exists = await new Promise(res => {
