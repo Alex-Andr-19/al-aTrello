@@ -148,9 +148,13 @@ app.get('/getUserIDByLogin', (req, res) => {
     }
     db.get('SELECT id From User Where login = (?)', [login], (er, row) => {
 
-        if (er) {
-            console.log(er)
-            resObj.er = er.msg
+        if (er || !row) {
+            if (er) {
+                console.log(er)
+                resObj.er = er.msg
+            } else {
+                resObj.er = 'login'
+            }
         } else {
             resObj.userID = row.id
         }

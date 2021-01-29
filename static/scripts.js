@@ -187,16 +187,19 @@ function getUserIDByLogin(login) {
         fetch(`/getUserIDByLogin?login=${login}`, {method: 'GET', credentials: 'include'})
             .then(response => response.json())
             .then(json => {
-                res(json.userID)
+                res(json)
             })
     })
 }
 
 function updateStickers() {
     getUserIDByLogin(userLogin.innerText)
-        .then(userID => {
+        .then(res => {
+            if (res.er === 'login') {
+                document.location.href += res.er
+            }
             getStickers().then(stickers => {
-                showStickers(stickers.stickers, userID)
+                showStickers(stickers.stickers, res.userID)
             })
         })
 }
@@ -271,7 +274,6 @@ function showStickers(stickers, userID) {
             startDragY = ev.offsetY
         })
         sticker.addEventListener('dragend', (ev) => {
-            console.log('1em = ' + (window.innerWidth / 100))
             vw = (window.innerWidth / 100)
             vh = (window.innerHeight / 100)
             sticker.style.top = scope((ev.pageY - startDragY) / vh, 8, 69.5) + 'vh'
@@ -363,7 +365,6 @@ function openEditWindow(sticker, userID) {
     allStickerMarks.append(markHTML)
 
     let stickerContent = document.getElementById('content')
-    console.log(stickerContent)
     stickerContent.value = sticker.content
 
     let editWindow = document.getElementById('edit-window')
@@ -427,7 +428,6 @@ function updateMarks() {
                     let resRows = json.rows
 
                     let marksList = document.getElementById('all-marks')
-                    console.log(marksList)
                     marksList.innerHTML = ""
                     resRows.forEach(mark => {
                         let markDiv = document.createElement('div')
@@ -587,7 +587,7 @@ window.addEventListener('load', () => {
 })
 
 setInterval(() => {
-    if (search.value !== searchText) {
+    if (search && search.value !== searchText) {
         searchText = search.value
         let stickerList = document.getElementsByClassName('sticker')
         if (searchText) {
